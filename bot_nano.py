@@ -18,7 +18,8 @@ price = data['price']
 
 nanos = 249
 
+botApiKey = "put-you-bot-apikey"
 amount = nanos * price
 
-r = requests.post('https://api.telegram.org/bot1560214598:AAHXHQG6goe4YvHGb-xgW3595h1qnqn9m30/sendMessage',
+r = requests.post('https://api.telegram.org/{botApiKey}/sendMessage'.format(botApiKey=botApiKey),
               data={'chat_id': '3281783', 'text': 'Current quote: {price}, current amount: {amount}'.format(price=round(price,5), amount=round(amount,2))})
