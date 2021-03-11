@@ -76,7 +76,7 @@ func sendToTelegram(currency string, price float64, amount float32, earn float64
 
 	botURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", botApiKey)
 	total := price * float64(amount)
-	_, err := http.PostForm(botURL, url.Values{"chat_id": {chatId}, "text": {fmt.Sprintf("%s: Current quote: %.5f, current amount for %.2f EUR: %.5f, Earn: %.2f%%", currency, price, amount, total, earn)}})
+	_, err := http.PostForm(botURL, url.Values{"chat_id": {chatId}, "text": {fmt.Sprintf("%s: Current quote: %.5f, current amount for %.2f =%.5f EUR, Earn: %.2f%%", currency, price, amount, total, earn)}})
 
 	if err != nil {
 		fmt.Printf("Error posting to Telegram %s", err.Error())
