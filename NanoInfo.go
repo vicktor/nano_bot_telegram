@@ -10,9 +10,9 @@ import (
 
 var client http.Client
 
-const apiKey string = "578c64cb-ddb4-4431-8514-ca265f4cfbe6"
-const botApiKey string = "1480978128:AAGXt4FIIVQQyUh4oacRlPQqaDr2XEroeNA"
-const chatId string = "-549731810"
+const apiKey string = "CoinMarketCap ApiKey"
+const botApiKey string = "Telegram ApiKey"
+const chatId string = "Telegram ChatID"
 
 type CryptoCurrency struct {
 	ID             int       `json:"id"`
