@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/alopezte/storage"
 )
 
 var client http.Client
@@ -63,19 +65,57 @@ type NanoResponse struct {
 		Cardano CryptoCurrency `json:"2010"`
 	} `json:"data"`
 }
+type PersistData struct {
+	Min        float64 `json:"min"`
+	Max        float64 `json:"max"`
+	FirstValue float64 `json:"firstValue"`
+	LastValue  float64 `json:"lastValue"`
+}
 
-func sendToTelegram(currency string, price float64, amount int32) {
+func sendToTelegram(currency string, price float64, amount float32, earn float64) {
 
 	botURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", botApiKey)
 	total := price * float64(amount)
-	_, err := http.PostForm(botURL, url.Values{"chat_id": {chatId}, "text": {fmt.Sprintf("%s: Current quote: %.5f, current amount for %d coins: %.5f", currency, price, amount, total)}})
+	_, err := http.PostForm(botURL, url.Values{"chat_id": {chatId}, "text": {fmt.Sprintf("%s: Current quote: %.5f, current amount for %.2f EUR: %.5f, Earn: %.2f%%", currency, price, amount, total, earn)}})
 
 	if err != nil {
 		fmt.Printf("Error posting to Telegram %s", err.Error())
 	}
-
 }
 
+func getFilenameDate(prefix string) string {
+	// Use layout string for time format.
+	const layout = "01-02-2006"
+	// Place now in the string.
+	t := time.Now()
+	return fmt.Sprintf("./%s-%s.txt", prefix, t.Format(layout))
+}
+
+func persist(currency string, price float64) float64 {
+
+	d := PersistData{}
+
+	fileName := getFilenameDate(currency)
+
+	err := storage.LoadFromFile(fileName, &d)
+	if err != nil {
+		fmt.Println(err.Error())
+		d = PersistData{FirstValue: price, LastValue: price, Min: price, Max: price}
+	} else {
+		d.LastValue = price
+		if d.Min > price {
+			d.Min = price
+		} else if d.Max < price {
+			d.Max = price
+		}
+	}
+	err = storage.PersistToFile(fileName, d)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	return 100.0 * (price - d.FirstValue) / d.FirstValue
+}
 func requestNano() error {
 
 	url := fmt.Sprintf("https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=1567,2010&convert=EUR&CMC_PRO_API_KEY=%s", apiKey)
@@ -104,9 +144,10 @@ func requestNano() error {
 		fmt.Printf("Error decoding body. %s", err.Error())
 		return err
 	}
-
-	sendToTelegram("Nano", nanoResponse.Data.Nano.Quote.EUR.Price, 19)
-	sendToTelegram("Cardano", nanoResponse.Data.Cardano.Quote.EUR.Price, 20)
+	nanoEarn := persist("Nano", nanoResponse.Data.Nano.Quote.EUR.Price)
+	cardanoEarn := persist("Cardano", nanoResponse.Data.Cardano.Quote.EUR.Price)
+	sendToTelegram("Nano", nanoResponse.Data.Nano.Quote.EUR.Price, 19, nanoEarn)
+	sendToTelegram("Cardano", nanoResponse.Data.Cardano.Quote.EUR.Price, 102.7, cardanoEarn)
 	return nil
 }
 
